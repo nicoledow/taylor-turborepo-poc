@@ -1,6 +1,13 @@
 import ExcelJS from "exceljs";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  fetchCSExportData,
+  fetchClassesPlansData,
+  fetchCurrentPlansData,
+  fetchRenewalPlansData,
+} from "./prismhr.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..", "..");
@@ -31,6 +38,7 @@ export async function generateWorkbook(
   populateRenewalPlans(renSheet, renewalPlansData);
 
   const safeName = outputFilename.replace(/\.xlsm$/i, ".xlsx");
+  await fs.mkdir(OUTPUT_DIR, { recursive: true });
   const outputPath = path.join(OUTPUT_DIR, safeName);
   await workbook.xlsx.writeFile(outputPath);
 
@@ -202,4 +210,28 @@ function populateRenewalPlans(sheet, data) {
   writeRows(sheet, 28, [...RENEWAL_COMMON_COLS, ...RENEWAL_LTD_EXTRA], data.ltd);
   writeRows(sheet, 34, [...RENEWAL_COMMON_COLS, ...RENEWAL_LIFE_EXTRA], data.life);
   writeRows(sheet, 40, [...RENEWAL_COMMON_COLS, ...RENEWAL_OTHER_EXTRA], data.other);
+}
+
+const entryPath = fileURLToPath(import.meta.url);
+if (path.resolve(process.argv[1] ?? "") === path.resolve(entryPath)) {
+  const clientId = process.env.CLIENT_ID ?? "102";
+  const outputFilename =
+    (process.argv[2] && path.basename(process.argv[2])) ||
+    `workbook_${clientId}.xlsx`;
+  generateWorkbook(
+    {
+      csExportData: fetchCSExportData(clientId),
+      classesPlansData: fetchClassesPlansData(clientId),
+      currentPlansData: fetchCurrentPlansData(clientId),
+      renewalPlansData: fetchRenewalPlansData(clientId),
+    },
+    outputFilename
+  )
+    .then((p) => {
+      console.log(p);
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }
