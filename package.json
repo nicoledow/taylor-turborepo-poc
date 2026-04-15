@@ -5,10 +5,17 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "generate:workbook": "node src/services/workbookGenerator.js"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "unzipper": "^0.12.3",
+    "vitest": "^4.1.4"
   }
 }
