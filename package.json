@@ -14,6 +14,7 @@
     "express": "^5.1.0"
   },
   "devDependencies": {
+    "unzipper": "^0.12.3",
     "vitest": "^4.1.4"
   }
 }

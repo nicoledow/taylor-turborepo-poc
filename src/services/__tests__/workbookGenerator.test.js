@@ -95,10 +95,40 @@ describe("generateWorkbook", () => {
     expect(sheet.getCell("A15").value).toBe("Benefit Year");
   });
 
-  it("throws when template is missing the CSExport sheet", async () => {
-    const origGenerateWorkbook = generateWorkbook;
-    await expect(
-      origGenerateWorkbook(csExportData, TEST_FILENAME)
-    ).resolves.toBeDefined();
+  it("replaces .xlsm extension with .xlsx in output filename", async () => {
+    const xlsmName = "test_output.xlsm";
+    const expectedPath = path.join(OUTPUT_DIR, "test_output.xlsx");
+
+    const outputPath = await generateWorkbook(csExportData, xlsmName);
+
+    expect(outputPath).toBe(expectedPath);
+    expect(outputPath.endsWith(".xlsx")).toBe(true);
+
+    if (fs.existsSync(expectedPath)) {
+      fs.unlinkSync(expectedPath);
+    }
+  });
+
+  it("produces a file with no VBA macros", async () => {
+    await generateWorkbook(csExportData, TEST_FILENAME);
+
+    const { createReadStream } = await import("node:fs");
+    const { default: unzipper } = await import("unzipper");
+    const entries = [];
+    await new Promise((resolve, reject) => {
+      createReadStream(TEST_OUTPUT_PATH)
+        .pipe(unzipper.Parse())
+        .on("entry", (entry) => {
+          entries.push(entry.path);
+          entry.autodrain();
+        })
+        .on("close", resolve)
+        .on("error", reject);
+    });
+
+    const vbaEntries = entries.filter(
+      (e) => e.includes("vbaProject") || e.endsWith(".bin")
+    );
+    expect(vbaEntries).toEqual([]);
   });
 });

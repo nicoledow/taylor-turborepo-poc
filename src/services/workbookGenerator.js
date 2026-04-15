@@ -18,7 +18,8 @@ export async function generateWorkbook(csExportData, outputFilename) {
 
   populateCSExport(sheet, csExportData);
 
-  const outputPath = path.join(OUTPUT_DIR, outputFilename);
+  const safeName = outputFilename.replace(/\.xlsm$/i, ".xlsx");
+  const outputPath = path.join(OUTPUT_DIR, safeName);
   await workbook.xlsx.writeFile(outputPath);
 
   return outputPath;
